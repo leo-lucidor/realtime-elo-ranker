@@ -3,7 +3,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 
 /* CSS from libraries */
-import '@realtime-elo-ranker/libs/ui/styles';
+// import '@realtime-elo-ranker/libs/ui/styles';
 
 const poppinsRegular = Poppins({
   weight: "400",

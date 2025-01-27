@@ -42,4 +42,10 @@ export class PlayersService {
         }
         return { id, rank: 1000 };
     }
+
+    updatePlayer(id: string, rank: number): void {
+        if (FAKE_PLAYERS.includes(id)) {
+            this.cache.set(id, rank);
+        }
+    }
 }

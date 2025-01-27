@@ -11,4 +11,5 @@ export declare class PlayersService {
         id: string;
         rank: number;
     };
+    updatePlayer(id: string, rank: number): void;
 }

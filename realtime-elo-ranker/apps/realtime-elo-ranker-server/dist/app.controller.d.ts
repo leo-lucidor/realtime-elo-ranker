@@ -7,7 +7,7 @@ export declare class AppController {
         id: string;
         rank: number;
     }[];
-    getRankingEvent(): string;
     getPlayers(): string[];
     getPlayersEvent(): string;
+    subscribeRankingEvents(res: Response, req: Request): void;
 }

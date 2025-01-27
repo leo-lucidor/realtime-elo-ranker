@@ -45,6 +45,11 @@ let PlayersService = PlayersService_1 = class PlayersService {
         }
         return { id, rank: 1000 };
     }
+    updatePlayer(id, rank) {
+        if (players_data_1.FAKE_PLAYERS.includes(id)) {
+            this.cache.set(id, rank);
+        }
+    }
 };
 exports.PlayersService = PlayersService;
 exports.PlayersService = PlayersService = PlayersService_1 = __decorate([

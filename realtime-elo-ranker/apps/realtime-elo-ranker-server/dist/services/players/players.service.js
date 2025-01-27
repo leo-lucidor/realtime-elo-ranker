@@ -8,24 +8,24 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var RankingCacheService_1;
+var PlayersService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RankingCacheService = void 0;
+exports.PlayersService = void 0;
 const common_1 = require("@nestjs/common");
 const players_data_1 = require("../../data/players.data");
-let RankingCacheService = RankingCacheService_1 = class RankingCacheService {
+let PlayersService = PlayersService_1 = class PlayersService {
     static getInstance() {
-        if (!RankingCacheService_1.instance) {
-            RankingCacheService_1.instance = new RankingCacheService_1();
+        if (!PlayersService_1.instance) {
+            PlayersService_1.instance = new PlayersService_1();
         }
-        return RankingCacheService_1.instance;
+        return PlayersService_1.instance;
     }
     constructor() {
         this.cache = new Map();
-        if (RankingCacheService_1.instance) {
-            throw new Error("Error: Instantiation failed: Use RankingCacheService.getInstance() instead of new.");
+        if (PlayersService_1.instance) {
+            throw new Error("Error: Instantiation failed: Use PlayersService.getInstance() instead of new.");
         }
-        RankingCacheService_1.instance = this;
+        PlayersService_1.instance = this;
     }
     set(key, value) {
         this.cache.set(key, value);
@@ -36,17 +36,19 @@ let RankingCacheService = RankingCacheService_1 = class RankingCacheService {
     clear() {
         this.cache.clear();
     }
-    getRanks() {
-        const fakeRanking = players_data_1.FAKE_PLAYERS.map((player, index) => ({
-            id: player,
-            rank: 1000 + index * 10
-        })).sort((a, b) => b.rank - a.rank);
-        return fakeRanking;
+    getPlayers() {
+        return players_data_1.FAKE_PLAYERS;
+    }
+    addPlayer(id) {
+        if (!players_data_1.FAKE_PLAYERS.includes(id)) {
+            players_data_1.FAKE_PLAYERS.push(id);
+        }
+        return { id, rank: 1000 };
     }
 };
-exports.RankingCacheService = RankingCacheService;
-exports.RankingCacheService = RankingCacheService = RankingCacheService_1 = __decorate([
+exports.PlayersService = PlayersService;
+exports.PlayersService = PlayersService = PlayersService_1 = __decorate([
     (0, common_1.Injectable)({ scope: common_1.Scope.DEFAULT }),
     __metadata("design:paramtypes", [])
-], RankingCacheService);
-//# sourceMappingURL=ranking-cache.service.js.map
+], PlayersService);
+//# sourceMappingURL=players.service.js.map

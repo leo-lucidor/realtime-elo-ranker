@@ -11,13 +11,27 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppController = void 0;
 const common_1 = require("@nestjs/common");
-const app_service_1 = require("./app.service");
+const ranking_cache_service_1 = require("./services/ranking-cache/ranking-cache.service");
+const players_service_1 = require("./services/players/players.service");
 let AppController = class AppController {
-    constructor(appService) {
-        this.appService = appService;
+    constructor() {
+        this.playersService = players_service_1.PlayersService.getInstance();
+        this.rankingCacheService = ranking_cache_service_1.RankingCacheService.getInstance();
     }
-    getHello() {
-        return this.appService.getHello();
+    getHome() {
+        return players_service_1.PlayersService.getInstance().getPlayers().toString();
+    }
+    getRanking() {
+        return this.rankingCacheService.getRanks();
+    }
+    getRankingEvent() {
+        return this.rankingCacheService.getRanks().toString();
+    }
+    getPlayers() {
+        return this.playersService.getPlayers();
+    }
+    getPlayersEvent() {
+        return this.playersService.addPlayer("test").id;
     }
 };
 exports.AppController = AppController;
@@ -26,9 +40,33 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", String)
-], AppController.prototype, "getHello", null);
+], AppController.prototype, "getHome", null);
+__decorate([
+    (0, common_1.Get)("/api/ranking"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Array)
+], AppController.prototype, "getRanking", null);
+__decorate([
+    (0, common_1.Get)("/api/ranking/events"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", String)
+], AppController.prototype, "getRankingEvent", null);
+__decorate([
+    (0, common_1.Get)("/api/players"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Array)
+], AppController.prototype, "getPlayers", null);
+__decorate([
+    (0, common_1.Get)("/api/players/events"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", String)
+], AppController.prototype, "getPlayersEvent", null);
 exports.AppController = AppController = __decorate([
     (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [app_service_1.AppService])
+    __metadata("design:paramtypes", [])
 ], AppController);
 //# sourceMappingURL=app.controller.js.map

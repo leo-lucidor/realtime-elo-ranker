@@ -1,6 +1,13 @@
-import { AppService } from './app.service';
 export declare class AppController {
-    private readonly appService;
-    constructor(appService: AppService);
-    getHello(): string;
+    private playersService;
+    private rankingCacheService;
+    constructor();
+    getHome(): string;
+    getRanking(): {
+        id: string;
+        rank: number;
+    }[];
+    getRankingEvent(): string;
+    getPlayers(): string[];
+    getPlayersEvent(): string;
 }

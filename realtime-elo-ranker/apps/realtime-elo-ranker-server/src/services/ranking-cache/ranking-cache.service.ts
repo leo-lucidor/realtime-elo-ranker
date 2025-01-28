@@ -71,4 +71,14 @@ export class RankingCacheService {
         return total / ranking.length;
     }
 
+        public updatePlayerRank(id: string, rankChange: number): void {
+        const ranking = this.cache.get("ranking") || [];
+        for (let playerData of ranking) {
+            if (playerData.id === id) {
+                playerData.rank += rankChange;
+                break;
+            }
+        }
+        this.cache.set("ranking", ranking);
+    }
 }

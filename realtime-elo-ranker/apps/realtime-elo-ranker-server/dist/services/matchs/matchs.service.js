@@ -24,6 +24,16 @@ let MatchsService = MatchsService_1 = class MatchsService {
         return MatchsService_1.instance;
     }
     async processMatch(match) {
+        const { adversaryA, adversaryB, winner, draw } = match;
+        if (draw) {
+            this.rankingCacheService.updatePlayerRank(adversaryA, 0);
+            this.rankingCacheService.updatePlayerRank(adversaryB, 0);
+        }
+        else {
+            this.rankingCacheService.updatePlayerRank(adversaryA, winner === adversaryA ? 50 : -50);
+            this.rankingCacheService.updatePlayerRank(adversaryB, winner === adversaryB ? 50 : -50);
+        }
+        return { adversaryA, adversaryB, winner, draw };
     }
 };
 exports.MatchsService = MatchsService;

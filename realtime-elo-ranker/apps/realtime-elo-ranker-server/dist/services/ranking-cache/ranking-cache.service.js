@@ -71,6 +71,16 @@ let RankingCacheService = RankingCacheService_1 = class RankingCacheService {
         const total = ranking.reduce((acc, player) => acc + player.rank, 0);
         return total / ranking.length;
     }
+    updatePlayerRank(id, rankChange) {
+        const ranking = this.cache.get("ranking") || [];
+        for (let playerData of ranking) {
+            if (playerData.id === id) {
+                playerData.rank += rankChange;
+                break;
+            }
+        }
+        this.cache.set("ranking", ranking);
+    }
 };
 exports.RankingCacheService = RankingCacheService;
 exports.RankingCacheService = RankingCacheService = RankingCacheService_1 = __decorate([

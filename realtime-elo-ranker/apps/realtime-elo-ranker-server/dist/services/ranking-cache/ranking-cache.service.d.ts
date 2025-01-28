@@ -13,4 +13,5 @@ export declare class RankingCacheService {
     getId(key: string): any | undefined;
     getRank(key: string): any | undefined;
     getAverageRanking(): number;
+    updatePlayerRank(id: string, rankChange: number): void;
 }

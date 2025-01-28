@@ -93,7 +93,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AppController.prototype, "getRankingEvent", null);
 __decorate([
-    (0, common_1.Post)("/post/match"),
+    (0, common_1.Post)("/api/match"),
     __param(0, (0, common_1.Res)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

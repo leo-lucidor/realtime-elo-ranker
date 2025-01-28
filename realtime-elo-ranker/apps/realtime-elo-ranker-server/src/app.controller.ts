@@ -22,16 +22,6 @@ export class AppController {
     return PlayersService.getInstance().getPlayers().toString();
   }
 
-  // @Get("/api/ranking")
-  // getRanking(): { id: string, rank: number }[] {
-  //   return this.rankingCacheService.getRanks();
-  // }
-
-  // @Get("/api/players")
-  // getPlayers(): string[] {
-  //   return this.playersService.getPlayers();
-  // }
-
   @Post("/api/player")
   postPlayer(@Res() res: Response, @Body() body: { id: string }): void {
     const { id } = body;
@@ -63,7 +53,7 @@ export class AppController {
     }, 500);
   }
 
-  @Post("/post/match")
+  @Post("/api/match")
   async postMatch(@Res() res: Response, @Body() body: { adversaryA: string, adversaryB: string, winner: string | null, draw: boolean }): Promise<void> {
     const matchService = this.matchService;
     const { adversaryA, adversaryB, winner, draw } = body;

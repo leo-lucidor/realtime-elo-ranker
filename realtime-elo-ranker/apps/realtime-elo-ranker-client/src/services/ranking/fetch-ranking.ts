@@ -1,6 +1,6 @@
 import { PlayerData } from "@realtime-elo-ranker/libs/ui";
 
-const URL = "/api/ranking/events";
+const URL = "/api/ranking";
 
 /**
  * Fetch the ranking.

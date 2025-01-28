@@ -1,15 +1,20 @@
 import { RankingCacheService } from './services/ranking-cache/ranking-cache.service';
 import { PlayersService } from './services/players/players.service';
-import { Body, Controller, Get, Post, Res, Req } from '@nestjs/common';
+import { MatchsService } from './services/matchs/matchs.service';
+import { Controller, Get, Res, Post, Body } from '@nestjs/common';
+import { Response } from 'express';
+import { FAKE_PLAYERS } from './data/players.data';
 
 @Controller()
 export class AppController {
   private playersService: PlayersService;
   private rankingCacheService: RankingCacheService;
+  private matchService: MatchsService;
 
   constructor() {
     this.playersService = PlayersService.getInstance();
     this.rankingCacheService = RankingCacheService.getInstance();
+    this.matchService = MatchsService.getInstance();
   }
 
   @Get()
@@ -17,49 +22,61 @@ export class AppController {
     return PlayersService.getInstance().getPlayers().toString();
   }
 
-  @Get("/api/ranking")
-  getRanking(): { id: string, rank: number }[] {
-    return this.rankingCacheService.getRanks();
-  }
-
-  // @Get("/api/ranking/events")
-  // getRankingEvent(): string {
-  //   return this.rankingCacheService.getRanks().toString();
+  // @Get("/api/ranking")
+  // getRanking(): { id: string, rank: number }[] {
+  //   return this.rankingCacheService.getRanks();
   // }
 
-  @Get("/api/players")
-  getPlayers(): string[] {
-    return this.playersService.getPlayers();
+  // @Get("/api/players")
+  // getPlayers(): string[] {
+  //   return this.playersService.getPlayers();
+  // }
+
+  @Post("/api/player")
+  postPlayer(@Res() res: Response, @Body() body: { id: string }): void {
+    const { id } = body;
+    console.log(`Received player: id=${id}`);
+    this.playersService.addPlayer(id);
+    res.status(200).send(id);
   }
 
-  @Get("/api/players/events")
-  getPlayersEvent(): string {
-    return this.playersService.addPlayer("test").id
+  @Get("/api/ranking/")
+  getRanking(): string {
+    return this.rankingCacheService.getRankingData("ranking");
   }
 
   @Get('/api/ranking/events')
-  subscribeRankingEvents(@Res() res: Response, @Req() req: Request): void {
+  getRankingEvent(@Res() res: Response): void {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
-    res.setHeader('Access-Control-Allow-Origin', '');
+    res.flushHeaders();
 
-    const sendRankingUpdate = () => {
-      const players = this.playersService.getPlayers();
-      const randomPlayer = players[Math.floor(Math.random() players.length)];
-      const data = {
+    setInterval(() => {
+      res.write("event: message\n" + "data: " + JSON.stringify({
         type: "RankingUpdate",
-        player: randomPlayer
-      };
-      res.write(event: message\n);
-      res.write(data: ${JSON.stringify(data)}\n\n);
-    };
+        player: {
+          id: FAKE_PLAYERS[Math.floor(Math.random() * FAKE_PLAYERS.length)],
+          rank: Math.floor(Math.random() * 2500)
+        }
+      }) + '\n\n');
+    }, 500);
+  }
 
-    const interval = setInterval(sendRankingUpdate, 500);
-
-    req.on('close', () => {
-      clearInterval(interval);
-      res.end();
-    });
+  @Post("/post/match")
+  async postMatch(@Res() res: Response, @Body() body: { adversaryA: string, adversaryB: string, winner: string | null, draw: boolean }): Promise<void> {
+    const matchService = this.matchService;
+    const { adversaryA, adversaryB, winner, draw } = body;
+  
+    console.log(`Received match: adversaryA=${adversaryA}, adversaryB=${adversaryB}, winner=${winner}, draw=${draw}`);
+  
+    if (!adversaryA || !adversaryB) {
+      console.error('adversaryA or adversaryB is undefined');
+      res.status(400).send('Invalid request: adversaryA or adversaryB is undefined');
+      return;
+    }
+  
+    const result = await matchService.processMatch({ adversaryA, adversaryB, winner, draw });
+    res.status(200).send(result);
   }
 }

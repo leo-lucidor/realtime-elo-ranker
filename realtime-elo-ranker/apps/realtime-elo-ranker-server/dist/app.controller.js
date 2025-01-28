@@ -15,44 +15,53 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppController = void 0;
 const ranking_cache_service_1 = require("./services/ranking-cache/ranking-cache.service");
 const players_service_1 = require("./services/players/players.service");
+const matchs_service_1 = require("./services/matchs/matchs.service");
 const common_1 = require("@nestjs/common");
+const players_data_1 = require("./data/players.data");
 let AppController = class AppController {
     constructor() {
         this.playersService = players_service_1.PlayersService.getInstance();
         this.rankingCacheService = ranking_cache_service_1.RankingCacheService.getInstance();
+        this.matchService = matchs_service_1.MatchsService.getInstance();
     }
     getHome() {
         return players_service_1.PlayersService.getInstance().getPlayers().toString();
     }
+    postPlayer(res, body) {
+        const { id } = body;
+        console.log(`Received player: id=${id}`);
+        this.playersService.addPlayer(id);
+        res.status(200).send(id);
+    }
     getRanking() {
-        return this.rankingCacheService.getRanks();
+        return this.rankingCacheService.getRankingData("ranking");
     }
-    getPlayers() {
-        return this.playersService.getPlayers();
-    }
-    getPlayersEvent() {
-        return this.playersService.addPlayer("test").id;
-    }
-    subscribeRankingEvents(res, req) {
+    getRankingEvent(res) {
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
-        res.setHeader('Access-Control-Allow-Origin', '');
-        const sendRankingUpdate = () => {
-            const players = this.playersService.getPlayers();
-            const randomPlayer = players[Math.floor(Math.random(), players.length)];
-            const data = {
+        res.flushHeaders();
+        setInterval(() => {
+            res.write("event: message\n" + "data: " + JSON.stringify({
                 type: "RankingUpdate",
-                player: randomPlayer
-            };
-            res.write(event, message, n);
-            res.write(data, $, { JSON, : .stringify(data) }, n, n);
-        };
-        const interval = setInterval(sendRankingUpdate, 500);
-        req.on('close', () => {
-            clearInterval(interval);
-            res.end();
-        });
+                player: {
+                    id: players_data_1.FAKE_PLAYERS[Math.floor(Math.random() * players_data_1.FAKE_PLAYERS.length)],
+                    rank: Math.floor(Math.random() * 2500)
+                }
+            }) + '\n\n');
+        }, 500);
+    }
+    async postMatch(res, body) {
+        const matchService = this.matchService;
+        const { adversaryA, adversaryB, winner, draw } = body;
+        console.log(`Received match: adversaryA=${adversaryA}, adversaryB=${adversaryB}, winner=${winner}, draw=${draw}`);
+        if (!adversaryA || !adversaryB) {
+            console.error('adversaryA or adversaryB is undefined');
+            res.status(400).send('Invalid request: adversaryA or adversaryB is undefined');
+            return;
+        }
+        const result = await matchService.processMatch({ adversaryA, adversaryB, winner, draw });
+        res.status(200).send(result);
     }
 };
 exports.AppController = AppController;
@@ -63,31 +72,34 @@ __decorate([
     __metadata("design:returntype", String)
 ], AppController.prototype, "getHome", null);
 __decorate([
-    (0, common_1.Get)("/api/ranking"),
+    (0, common_1.Post)("/api/player"),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Array)
-], AppController.prototype, "getRanking", null);
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], AppController.prototype, "postPlayer", null);
 __decorate([
-    (0, common_1.Get)("/api/players"),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Array)
-], AppController.prototype, "getPlayers", null);
-__decorate([
-    (0, common_1.Get)("/api/players/events"),
+    (0, common_1.Get)("/api/ranking/"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", String)
-], AppController.prototype, "getPlayersEvent", null);
+], AppController.prototype, "getRanking", null);
 __decorate([
     (0, common_1.Get)('/api/ranking/events'),
     __param(0, (0, common_1.Res)()),
-    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Response, Request]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], AppController.prototype, "subscribeRankingEvents", null);
+], AppController.prototype, "getRankingEvent", null);
+__decorate([
+    (0, common_1.Post)("/post/match"),
+    __param(0, (0, common_1.Res)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "postMatch", null);
 exports.AppController = AppController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [])

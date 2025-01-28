@@ -1,10 +1,15 @@
 import { Injectable, Scope } from '@nestjs/common';
 import { FAKE_PLAYERS } from 'src/data/players.data';
+import { RankingCacheService } from '../ranking-cache/ranking-cache.service';
 
 @Injectable({ scope: Scope.DEFAULT })
 export class PlayersService {
     private static instance: PlayersService;
-    private cache: Map<string, number> = new Map();
+    private rankingCacheService: RankingCacheService;
+
+    constructor() {
+        this.rankingCacheService = RankingCacheService.getInstance();
+    }
 
     public static getInstance(): PlayersService {
         if (!PlayersService.instance) {
@@ -13,39 +18,23 @@ export class PlayersService {
         return PlayersService.instance;
     }
 
-    constructor() {
-        if (PlayersService.instance) {
-            throw new Error("Error: Instantiation failed: Use PlayersService.getInstance() instead of new.");
-        }
-        PlayersService.instance = this;
-    }
-
-    set(key: string, value: number): void {
-        this.cache.set(key, value);
-    }
-
-    get(key: string): number | undefined {
-        return this.cache.get(key);
-    }
-
-    clear(): void {
-        this.cache.clear();
-    }
-
-    getPlayers(): string[] {
-        return FAKE_PLAYERS;
-    }
-
-    addPlayer(id: string): { id: string, rank: number } {
-        if (!FAKE_PLAYERS.includes(id)) {
-            FAKE_PLAYERS.push(id);
-        }
-        return { id, rank: 1000 };
+    public addPlayer(id: string): boolean | undefined {
+        if (this.rankingCacheService.getId(id)) {
+            console.log(`Player with id ${id} already exists`);
+            return false;
+        } 
+        let rank = this.rankingCacheService.getAverageRanking();
+        console.log(`Adding player with id ${id} and rank ${rank}`);
+        this.rankingCacheService.pushPlayerData({id, rank});
+        return true;
     }
 
     updatePlayer(id: string, rank: number): void {
-        if (FAKE_PLAYERS.includes(id)) {
-            this.cache.set(id, rank);
-        }
+        this.rankingCacheService.setRankingData(id, rank);
+    }
+
+    getPlayers(): string[] {
+        const ranking = this.rankingCacheService.getRankingData("ranking") || [];
+        return ranking.map((player: { id: string; }) => player.id);
     }
 }

@@ -14,34 +14,62 @@ exports.RankingCacheService = void 0;
 const common_1 = require("@nestjs/common");
 const players_data_1 = require("../../data/players.data");
 let RankingCacheService = RankingCacheService_1 = class RankingCacheService {
+    constructor() {
+        this.cache = new Map();
+        this.cache = new Map();
+        const fakeRanking = players_data_1.FAKE_PLAYERS.map((player, index) => ({
+            id: player,
+            rank: 1000 + index * 10
+        })).sort((a, b) => b.rank - a.rank);
+        this.cache.set('ranking', fakeRanking);
+    }
     static getInstance() {
         if (!RankingCacheService_1.instance) {
             RankingCacheService_1.instance = new RankingCacheService_1();
         }
         return RankingCacheService_1.instance;
     }
-    constructor() {
-        this.cache = new Map();
-        if (RankingCacheService_1.instance) {
-            throw new Error("Error: Instantiation failed: Use RankingCacheService.getInstance() instead of new.");
-        }
-        RankingCacheService_1.instance = this;
+    setRankingData(key, data) {
+        const ranking = this.cache.get("ranking") || [];
+        ranking.push({ id: key, rank: data });
+        this.cache.set("ranking", ranking);
     }
-    set(key, value) {
-        this.cache.set(key, value);
+    pushPlayerData(playerData) {
+        const ranking = this.cache.get("ranking") || [];
+        ranking.push(playerData);
+        this.cache.set("ranking", ranking);
     }
-    get(key) {
+    getCache() {
+        return this.cache;
+    }
+    getRankingData(key) {
         return this.cache.get(key);
     }
-    clear() {
-        this.cache.clear();
+    getId(key) {
+        const ranking = this.cache.get("ranking") || [];
+        for (const playerData of ranking) {
+            if (playerData.id === key) {
+                return playerData.id;
+            }
+        }
+        return undefined;
     }
-    getRanks() {
-        const fakeRanking = players_data_1.FAKE_PLAYERS.map((player, index) => ({
-            id: player,
-            rank: 1000 + index * 10
-        })).sort((a, b) => b.rank - a.rank);
-        return fakeRanking;
+    getRank(key) {
+        const ranking = this.cache.get("ranking") || [];
+        for (const playerData of ranking) {
+            if (playerData.id === key) {
+                return playerData.rank;
+            }
+        }
+        return undefined;
+    }
+    getAverageRanking() {
+        const ranking = this.cache.get('ranking') || [];
+        if (ranking.length === 0) {
+            return 0;
+        }
+        const total = ranking.reduce((acc, player) => acc + player.rank, 0);
+        return total / ranking.length;
     }
 };
 exports.RankingCacheService = RankingCacheService;

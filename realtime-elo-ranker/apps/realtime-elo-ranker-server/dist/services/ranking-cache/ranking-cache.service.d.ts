@@ -1,13 +1,16 @@
 export declare class RankingCacheService {
     private static instance;
     private cache;
-    static getInstance(): RankingCacheService;
     constructor();
-    set(key: string, value: any): void;
-    get(key: string): any | undefined;
-    clear(): void;
-    getRanks(): {
+    static getInstance(): RankingCacheService;
+    setRankingData(key: string, data: any): void;
+    pushPlayerData(playerData: {
         id: string;
         rank: number;
-    }[];
+    }): void;
+    getCache(): Map<string, any>;
+    getRankingData(key: string): any | undefined;
+    getId(key: string): any | undefined;
+    getRank(key: string): any | undefined;
+    getAverageRanking(): number;
 }

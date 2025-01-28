@@ -12,43 +12,33 @@ var PlayersService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PlayersService = void 0;
 const common_1 = require("@nestjs/common");
-const players_data_1 = require("../../data/players.data");
+const ranking_cache_service_1 = require("../ranking-cache/ranking-cache.service");
 let PlayersService = PlayersService_1 = class PlayersService {
+    constructor() {
+        this.rankingCacheService = ranking_cache_service_1.RankingCacheService.getInstance();
+    }
     static getInstance() {
         if (!PlayersService_1.instance) {
             PlayersService_1.instance = new PlayersService_1();
         }
         return PlayersService_1.instance;
     }
-    constructor() {
-        this.cache = new Map();
-        if (PlayersService_1.instance) {
-            throw new Error("Error: Instantiation failed: Use PlayersService.getInstance() instead of new.");
-        }
-        PlayersService_1.instance = this;
-    }
-    set(key, value) {
-        this.cache.set(key, value);
-    }
-    get(key) {
-        return this.cache.get(key);
-    }
-    clear() {
-        this.cache.clear();
-    }
-    getPlayers() {
-        return players_data_1.FAKE_PLAYERS;
-    }
     addPlayer(id) {
-        if (!players_data_1.FAKE_PLAYERS.includes(id)) {
-            players_data_1.FAKE_PLAYERS.push(id);
+        if (this.rankingCacheService.getId(id)) {
+            console.log(`Player with id ${id} already exists`);
+            return false;
         }
-        return { id, rank: 1000 };
+        let rank = this.rankingCacheService.getAverageRanking();
+        console.log(`Adding player with id ${id} and rank ${rank}`);
+        this.rankingCacheService.pushPlayerData({ id, rank });
+        return true;
     }
     updatePlayer(id, rank) {
-        if (players_data_1.FAKE_PLAYERS.includes(id)) {
-            this.cache.set(id, rank);
-        }
+        this.rankingCacheService.setRankingData(id, rank);
+    }
+    getPlayers() {
+        const ranking = this.rankingCacheService.getRankingData("ranking") || [];
+        return ranking.map((player) => player.id);
     }
 };
 exports.PlayersService = PlayersService;

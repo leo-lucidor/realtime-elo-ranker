@@ -1,15 +1,9 @@
 export declare class PlayersService {
     private static instance;
-    private cache;
-    static getInstance(): PlayersService;
+    private rankingCacheService;
     constructor();
-    set(key: string, value: number): void;
-    get(key: string): number | undefined;
-    clear(): void;
-    getPlayers(): string[];
-    addPlayer(id: string): {
-        id: string;
-        rank: number;
-    };
+    static getInstance(): PlayersService;
+    addPlayer(id: string): boolean | undefined;
     updatePlayer(id: string, rank: number): void;
+    getPlayers(): string[];
 }

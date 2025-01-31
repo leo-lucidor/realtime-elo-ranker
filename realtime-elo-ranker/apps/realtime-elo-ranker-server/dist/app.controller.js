@@ -52,15 +52,7 @@ let AppController = class AppController {
         }, 500);
     }
     async postMatch(res, body) {
-        const matchService = this.matchService;
-        const { adversaryA, adversaryB, winner, draw } = body;
-        console.log(`Received match: adversaryA=${adversaryA}, adversaryB=${adversaryB}, winner=${winner}, draw=${draw}`);
-        if (!adversaryA || !adversaryB) {
-            console.error('adversaryA or adversaryB is undefined');
-            res.status(400).send('Invalid request: adversaryA or adversaryB is undefined');
-            return;
-        }
-        const result = await matchService.processMatch({ adversaryA, adversaryB, winner, draw });
+        const result = await this.matchService.processMatch(body);
         res.status(200).send(result);
     }
 };

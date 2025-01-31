@@ -37,4 +37,12 @@ export class PlayersService {
         const ranking = this.rankingCacheService.getRankingData("ranking") || [];
         return ranking.map((player: { id: string; }) => player.id);
     }
+
+    getPlayer(id: string): { id: string; rank: number; } {
+        return this.rankingCacheService.getRankingData("ranking").find((player: { id: string; }) => player.id === id);
+    }
+
+    getRankPlayer(id: string): number {
+        return this.rankingCacheService.getRankingData("ranking").find((player: { id: string; }) => player.id === id).rank;
+    }
 }

@@ -113,10 +113,21 @@ export default function Home() {
     const handlePlayerPosted = (playerId: string) => {
       fetchRanking(API_BASE_URL).then(setLadderData);
     };
-    eventEmitter.on("playerPost", handlePlayerPosted);
+    eventEmitter.on("playerPosted", handlePlayerPosted);
 
     return () => {
-      eventEmitter.off("playerPost", handlePlayerPosted);
+      eventEmitter.off("playerPosted", handlePlayerPosted);
+    };
+  }, [API_BASE_URL]);
+
+  useEffect(() => {
+    const handleMatchResultPosted = () => {
+      fetchRanking(API_BASE_URL).then(setLadderData);
+    };
+    eventEmitter.on("matchResultPosted", handleMatchResultPosted);
+
+    return () => {
+      eventEmitter.off("matchResultPosted", handleMatchResultPosted);
     };
   }, [API_BASE_URL]);
 
@@ -151,10 +162,9 @@ export default function Home() {
               ) => {
                 const reponse = await postMatchResult(API_BASE_URL, adversaryA, adversaryB, result);
                 if (reponse.ok) {
-                  console.log("Match enregistré");
-                } else {
-                  console.error("Erreur lors de l'enregistrement du match");
-                }
+                  eventEmitter.emit("matchResultPosted");
+                } 
+                return reponse;
               }}
             />
           </div>

@@ -4,23 +4,6 @@ export const FAKE_PLAYERS : string[] = [
     "pspurman2",
     "gkail3",
     "ptoll4",
-    "dshoard5",
-    "pwinton6",
-    "clinger7",
-    "atolliday8",
-    "cboxhall9",
-    "ljakuszewskia",
-    "dservisb",
-    "kkearlec",
-    "cmartindaled",
-    "sledrame",
-    "psheddanf",
-    "lwoodruffg",
-    "dbrewitth",
-    "tokroyi",
-    "puccelij",
-    "fmurdenk",
-    "pdakersl",
   ];
   
   

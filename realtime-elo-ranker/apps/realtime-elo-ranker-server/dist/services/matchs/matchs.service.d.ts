@@ -1,6 +1,7 @@
 export declare class MatchsService {
     private static instance;
     private rankingCacheService;
+    private playersService;
     constructor();
     static getInstance(): MatchsService;
     processMatch(match: {
@@ -8,5 +9,5 @@ export declare class MatchsService {
         adversaryB: string;
         winner: string | null;
         draw: boolean;
-    }): Promise<any>;
+    }): Promise<string>;
 }

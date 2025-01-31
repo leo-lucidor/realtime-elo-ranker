@@ -13,9 +13,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MatchsService = void 0;
 const common_1 = require("@nestjs/common");
 const ranking_cache_service_1 = require("../ranking-cache/ranking-cache.service");
+const players_service_1 = require("../players/players.service");
 let MatchsService = MatchsService_1 = class MatchsService {
     constructor() {
         this.rankingCacheService = ranking_cache_service_1.RankingCacheService.getInstance();
+        this.playersService = players_service_1.PlayersService.getInstance();
     }
     static getInstance() {
         if (!MatchsService_1.instance) {
@@ -25,15 +27,37 @@ let MatchsService = MatchsService_1 = class MatchsService {
     }
     async processMatch(match) {
         const { adversaryA, adversaryB, winner, draw } = match;
-        if (draw) {
-            this.rankingCacheService.updatePlayerRank(adversaryA, 0);
-            this.rankingCacheService.updatePlayerRank(adversaryB, 0);
+        if (!this.rankingCacheService.getId(adversaryA) || !this.rankingCacheService.getId(adversaryB)) {
+            throw new Error(`One of the players does not exist`);
         }
-        else {
-            this.rankingCacheService.updatePlayerRank(adversaryA, winner === adversaryA ? 50 : -50);
-            this.rankingCacheService.updatePlayerRank(adversaryB, winner === adversaryB ? 50 : -50);
+        const playerARank = this.playersService.getRankPlayer(adversaryA);
+        const playerBRank = this.playersService.getRankPlayer(adversaryB);
+        const K = 32;
+        const weA = 1 / (1 + Math.pow(10, (playerBRank - playerARank) / 400));
+        const weB = 1 / (1 + Math.pow(10, (playerARank - playerBRank) / 400));
+        let scoreA = 0.5;
+        let scoreB = 0.5;
+        let result = "Match nul";
+        if (!draw) {
+            if (winner === adversaryA) {
+                scoreA = 1;
+                scoreB = 0;
+                result = `${adversaryA} gagne`;
+            }
+            else if (winner === adversaryB) {
+                scoreA = 0;
+                scoreB = 1;
+                result = `${adversaryB} gagne`;
+            }
+            else {
+                throw new Error(`Winner must be one of the players`);
+            }
         }
-        return { adversaryA, adversaryB, winner, draw };
+        const scoreAUpdated = Math.round(playerARank + K * (scoreA - weA));
+        const scoreBUpdated = Math.round(playerBRank + K * (scoreB - weB));
+        this.rankingCacheService.updatePlayerRank(adversaryA, scoreAUpdated);
+        this.rankingCacheService.updatePlayerRank(adversaryB, scoreBUpdated);
+        return result;
     }
 };
 exports.MatchsService = MatchsService;

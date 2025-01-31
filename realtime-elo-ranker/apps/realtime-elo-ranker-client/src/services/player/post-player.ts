@@ -1,3 +1,5 @@
+import eventEmitter from "../../app/eventEmitter";
+
 const URL = "/api/player";
 
 /**
@@ -15,5 +17,10 @@ export default function postPlayer(baseUrl: string, id: string): Promise<Respons
     headers: {
       "Content-Type": "application/json",
     },
+  }).then((res) => {
+    if (res.ok){
+      eventEmitter.emit("playerPosted", id);
+    }
+    return res;
   });
 }

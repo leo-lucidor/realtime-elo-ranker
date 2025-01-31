@@ -40,6 +40,12 @@ let PlayersService = PlayersService_1 = class PlayersService {
         const ranking = this.rankingCacheService.getRankingData("ranking") || [];
         return ranking.map((player) => player.id);
     }
+    getPlayer(id) {
+        return this.rankingCacheService.getRankingData("ranking").find((player) => player.id === id);
+    }
+    getRankPlayer(id) {
+        return this.rankingCacheService.getRankingData("ranking").find((player) => player.id === id).rank;
+    }
 };
 exports.PlayersService = PlayersService;
 exports.PlayersService = PlayersService = PlayersService_1 = __decorate([

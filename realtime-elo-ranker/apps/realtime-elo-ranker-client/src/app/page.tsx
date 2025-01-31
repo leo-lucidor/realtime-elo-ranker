@@ -17,6 +17,8 @@ import {
 import { motion } from "motion/react";
 import postMatchResult from "../services/match/post-match-result";
 import postPlayer from "../services/player/post-player";
+import EventEmitter from "./eventEmitter";
+import eventEmitter from "./eventEmitter";
 
 const poppinsBold = Poppins({
   weight: "600",
@@ -107,6 +109,17 @@ export default function Home() {
     return () => eventSource.close();
   }, [API_BASE_URL, updateLadderData]);
 
+  useEffect(() => {
+    const handlePlayerPosted = (playerId: string) => {
+      fetchRanking(API_BASE_URL).then(setLadderData);
+    };
+    eventEmitter.on("playerPost", handlePlayerPosted);
+
+    return () => {
+      eventEmitter.off("playerPost", handlePlayerPosted);
+    };
+  }, [API_BASE_URL]);
+
   return (
     <div className="min-h-screen w-full">
       <motion.main
@@ -131,13 +144,18 @@ export default function Home() {
               Déclarer un match
             </h2>
             <MatchForm
-              callback={(
+              callback={async (
                 adversaryA: string,
                 adversaryB: string,
                 result: MatchResult
-              ) =>
-                postMatchResult(API_BASE_URL, adversaryA, adversaryB, result)
-              }
+              ) => {
+                const reponse = await postMatchResult(API_BASE_URL, adversaryA, adversaryB, result);
+                if (reponse.ok) {
+                  console.log("Match enregistré");
+                } else {
+                  console.error("Erreur lors de l'enregistrement du match");
+                }
+              }}
             />
           </div>
           <div className="flex flex-col gap-4">

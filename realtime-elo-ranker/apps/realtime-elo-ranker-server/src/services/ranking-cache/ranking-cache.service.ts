@@ -1,84 +1,65 @@
-import { Injectable, Scope } from '@nestjs/common';
-import { FAKE_PLAYERS } from '../../data/players.data';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Player } from '../../entity/entity.player';
 
-@Injectable({ scope: Scope.DEFAULT })
+@Injectable()
 export class RankingCacheService {
-    private static instance: RankingCacheService;
-    private cache: Map<string, any> = new Map();
+  constructor(
+    @InjectRepository(Player)
+    private readonly playerRepository: Repository<Player>,
+  ) {}
 
-    constructor() {
-        this.cache = new Map();
-        const fakeRanking = FAKE_PLAYERS.map((player, index) => ({
-        id: player,
-        rank: 1000 + index * 10
-        })).sort((a, b) => b.rank - a.rank);
-        this.cache.set('ranking', fakeRanking);
+  public async setRankingData(name: string, rank: number): Promise<void> {
+    const player = await this.playerRepository.findOne({ where: { name } });
+    if (player) {
+      player.rank = rank;
+      await this.playerRepository.save(player);
+    } else {
+      const newPlayer = this.playerRepository.create({ name, rank });
+      await this.playerRepository.save(newPlayer);
     }
+  }
 
-    public static getInstance(): RankingCacheService {
-        if (!RankingCacheService.instance) {
-            RankingCacheService.instance = new RankingCacheService();
-        }
-        return RankingCacheService.instance;
+  public async pushPlayerData(playerData: { name: string; rank: number; }): Promise<void> {
+    const player = await this.playerRepository.findOne({ where: { name: playerData.name } });
+    if (player) {
+      player.rank = playerData.rank;
+      await this.playerRepository.save(player);
+    } else {
+      const newPlayer = this.playerRepository.create(playerData);
+      await this.playerRepository.save(newPlayer);
     }
+  }
 
-    public setRankingData(key: string, data: any): void {
-        const ranking = this.cache.get("ranking") || [];
-        ranking.push({id : key, rank : data})
-        this.cache.set("ranking", ranking);
-    }
+  public async getRankingData(): Promise<Player[]> {
+    return await this.playerRepository.find({ order: { rank: 'DESC' } });
+  }
 
-    public pushPlayerData(playerData: { id: string; rank: number; }): void {
-        const ranking = this.cache.get("ranking") || [];
-        ranking.push(playerData);
-        this.cache.set("ranking", ranking);
-    }
+  public async getId(name: string): Promise<number | undefined> {
+    const player = await this.playerRepository.findOne({ where: { name } });
+    return player ? player.id : undefined;
+  }
 
-    public getCache(): Map<string, any> {
-        return this.cache;
-    }
-    
-    public getRankingData(key: string): any | undefined {
-        return this.cache.get(key);
-    }
-    
-    public getId(key: string): any | undefined {
-        const ranking = this.cache.get("ranking") || [];
-        for (const playerData of ranking) {
-            if (playerData.id === key) {
-                return playerData.id;
-            }
-        }
-        return undefined;
-    }
-    
-    public getRank(key: string): any | undefined {
-        const ranking = this.cache.get("ranking") || [];
-        for (const playerData of ranking) {
-            if (playerData.id === key) {
-                return playerData.rank;
-            }
-        }
-        return undefined;
-    }
+  public async getRank(name: string): Promise<number | undefined> {
+    const player = await this.playerRepository.findOne({ where: { name } });
+    return player ? player.rank : undefined;
+  }
 
-    public getAverageRanking(): number {
-        const ranking = this.cache.get('ranking') || [];
-        if (ranking.length === 0) {
-            return 0;
-        }
-        const total = ranking.reduce((acc: any, player: { rank: any; }) => acc + player.rank, 0);
-        return total / ranking.length;
+  public async getAverageRanking(): Promise<number> {
+    const players = await this.playerRepository.find();
+    if (players.length === 0) {
+      return 0;
     }
+    const total = players.reduce((acc, player) => acc + player.rank, 0);
+    return total / players.length;
+  }
 
-        public updatePlayerRank(id: string, rankChange: number): void {
-        const ranking = this.cache.get("ranking") || [];
-        for (let playerData of ranking) {
-            if (playerData.id === id) {
-                playerData.rank += rankChange;
-                break;
-            }
-        }
-        this.cache.set("ranking", ranking);
+  public async updatePlayerRank(name: string, rankChange: number): Promise<void> {
+    const player = await this.playerRepository.findOne({ where: { name } });
+    if (player) {
+      player.rank += rankChange;
+      await this.playerRepository.save(player);
     }
+  }
 }

@@ -8,83 +8,72 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var RankingCacheService_1;
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RankingCacheService = void 0;
 const common_1 = require("@nestjs/common");
-const players_data_1 = require("../../data/players.data");
-let RankingCacheService = RankingCacheService_1 = class RankingCacheService {
-    constructor() {
-        this.cache = new Map();
-        this.cache = new Map();
-        const fakeRanking = players_data_1.FAKE_PLAYERS.map((player, index) => ({
-            id: player,
-            rank: 1000 + index * 10
-        })).sort((a, b) => b.rank - a.rank);
-        this.cache.set('ranking', fakeRanking);
+const typeorm_1 = require("@nestjs/typeorm");
+const typeorm_2 = require("typeorm");
+const entity_player_1 = require("../../entity/entity.player");
+let RankingCacheService = class RankingCacheService {
+    constructor(playerRepository) {
+        this.playerRepository = playerRepository;
     }
-    static getInstance() {
-        if (!RankingCacheService_1.instance) {
-            RankingCacheService_1.instance = new RankingCacheService_1();
+    async setRankingData(name, rank) {
+        const player = await this.playerRepository.findOne({ where: { name } });
+        if (player) {
+            player.rank = rank;
+            await this.playerRepository.save(player);
         }
-        return RankingCacheService_1.instance;
-    }
-    setRankingData(key, data) {
-        const ranking = this.cache.get("ranking") || [];
-        ranking.push({ id: key, rank: data });
-        this.cache.set("ranking", ranking);
-    }
-    pushPlayerData(playerData) {
-        const ranking = this.cache.get("ranking") || [];
-        ranking.push(playerData);
-        this.cache.set("ranking", ranking);
-    }
-    getCache() {
-        return this.cache;
-    }
-    getRankingData(key) {
-        return this.cache.get(key);
-    }
-    getId(key) {
-        const ranking = this.cache.get("ranking") || [];
-        for (const playerData of ranking) {
-            if (playerData.id === key) {
-                return playerData.id;
-            }
+        else {
+            const newPlayer = this.playerRepository.create({ name, rank });
+            await this.playerRepository.save(newPlayer);
         }
-        return undefined;
     }
-    getRank(key) {
-        const ranking = this.cache.get("ranking") || [];
-        for (const playerData of ranking) {
-            if (playerData.id === key) {
-                return playerData.rank;
-            }
+    async pushPlayerData(playerData) {
+        const player = await this.playerRepository.findOne({ where: { name: playerData.name } });
+        if (player) {
+            player.rank = playerData.rank;
+            await this.playerRepository.save(player);
         }
-        return undefined;
+        else {
+            const newPlayer = this.playerRepository.create(playerData);
+            await this.playerRepository.save(newPlayer);
+        }
     }
-    getAverageRanking() {
-        const ranking = this.cache.get('ranking') || [];
-        if (ranking.length === 0) {
+    async getRankingData() {
+        return await this.playerRepository.find({ order: { rank: 'DESC' } });
+    }
+    async getId(name) {
+        const player = await this.playerRepository.findOne({ where: { name } });
+        return player ? player.id : undefined;
+    }
+    async getRank(name) {
+        const player = await this.playerRepository.findOne({ where: { name } });
+        return player ? player.rank : undefined;
+    }
+    async getAverageRanking() {
+        const players = await this.playerRepository.find();
+        if (players.length === 0) {
             return 0;
         }
-        const total = ranking.reduce((acc, player) => acc + player.rank, 0);
-        return total / ranking.length;
+        const total = players.reduce((acc, player) => acc + player.rank, 0);
+        return total / players.length;
     }
-    updatePlayerRank(id, rankChange) {
-        const ranking = this.cache.get("ranking") || [];
-        for (let playerData of ranking) {
-            if (playerData.id === id) {
-                playerData.rank += rankChange;
-                break;
-            }
+    async updatePlayerRank(name, rankChange) {
+        const player = await this.playerRepository.findOne({ where: { name } });
+        if (player) {
+            player.rank += rankChange;
+            await this.playerRepository.save(player);
         }
-        this.cache.set("ranking", ranking);
     }
 };
 exports.RankingCacheService = RankingCacheService;
-exports.RankingCacheService = RankingCacheService = RankingCacheService_1 = __decorate([
-    (0, common_1.Injectable)({ scope: common_1.Scope.DEFAULT }),
-    __metadata("design:paramtypes", [])
+exports.RankingCacheService = RankingCacheService = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, typeorm_1.InjectRepository)(entity_player_1.Player)),
+    __metadata("design:paramtypes", [typeorm_2.Repository])
 ], RankingCacheService);
 //# sourceMappingURL=ranking-cache.service.js.map

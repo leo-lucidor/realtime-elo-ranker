@@ -1,14 +1,12 @@
+import { Repository } from 'typeorm';
+import { Player } from '../../entity/entity.player';
 export declare class PlayersService {
-    private static instance;
-    private rankingCacheService;
-    constructor();
-    static getInstance(): PlayersService;
-    addPlayer(id: string): boolean | undefined;
-    updatePlayer(id: string, rank: number): void;
-    getPlayers(): string[];
-    getPlayer(id: string): {
-        id: string;
-        rank: number;
-    };
-    getRankPlayer(id: string): number;
+    private readonly playerRepository;
+    constructor(playerRepository: Repository<Player>);
+    addPlayer(name: string): Promise<Player>;
+    updatePlayer(id: number, rank: number): Promise<void>;
+    getPlayers(): Promise<Player[]>;
+    getPlayer(id: number): Promise<Player>;
+    getRankPlayer(id: number): Promise<number>;
+    private getAverageRanking;
 }

@@ -1,48 +1,57 @@
-import { Injectable, Scope } from '@nestjs/common';
-import { FAKE_PLAYERS } from 'src/data/players.data';
-import { RankingCacheService } from '../ranking-cache/ranking-cache.service';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Player } from '../../entity/entity.player';
 
-@Injectable({ scope: Scope.DEFAULT })
+@Injectable()
 export class PlayersService {
-    private static instance: PlayersService;
-    private rankingCacheService: RankingCacheService;
+  constructor(
+    @InjectRepository(Player)
+    private readonly playerRepository: Repository<Player>,
+  ) {}
 
-    constructor() {
-        this.rankingCacheService = RankingCacheService.getInstance();
+  async addPlayer(name: string): Promise<Player> {
+    const existingPlayer = await this.playerRepository.findOne({ where: { name } });
+    if (existingPlayer) {
+      console.log(`Player with name ${name} already exists`);
+      return existingPlayer;
     }
 
-    public static getInstance(): PlayersService {
-        if (!PlayersService.instance) {
-            PlayersService.instance = new PlayersService();
-        }
-        return PlayersService.instance;
-    }
+    const rank = await this.getAverageRanking();
+    const newPlayer = this.playerRepository.create({ name, rank });
+    return this.playerRepository.save(newPlayer);
+  }
 
-    public addPlayer(id: string): boolean | undefined {
-        if (this.rankingCacheService.getId(id)) {
-            console.log(`Player with id ${id} already exists`);
-            return false;
-        } 
-        let rank = this.rankingCacheService.getAverageRanking();
-        console.log(`Adding player with id ${id} and rank ${rank}`);
-        this.rankingCacheService.pushPlayerData({id, rank});
-        return true;
-    }
+  async updatePlayer(id: number, rank: number): Promise<void> {
+    await this.playerRepository.update(id, { rank });
+  }
 
-    updatePlayer(id: string, rank: number): void {
-        this.rankingCacheService.setRankingData(id, rank);
-    }
+  async getPlayers(): Promise<Player[]> {
+    return this.playerRepository.find();
+  }
 
-    getPlayers(): string[] {
-        const ranking = this.rankingCacheService.getRankingData("ranking") || [];
-        return ranking.map((player: { id: string; }) => player.id);
+  async getPlayer(id: number): Promise<Player> {
+    const player = await this.playerRepository.findOne({ where: { id } });
+    if (!player) {
+      throw new Error(`Player with id ${id} not found`);
     }
+    return player;
+  }
 
-    getPlayer(id: string): { id: string; rank: number; } {
-        return this.rankingCacheService.getRankingData("ranking").find((player: { id: string; }) => player.id === id);
+  async getRankPlayer(id: number): Promise<number> {
+    const player = await this.playerRepository.findOne({ where: { id } });
+    if (!player) {
+      throw new Error(`Player with id ${id} not found`);
     }
+    return player.rank;
+  }
 
-    getRankPlayer(id: string): number {
-        return this.rankingCacheService.getRankingData("ranking").find((player: { id: string; }) => player.id === id).rank;
+  private async getAverageRanking(): Promise<number> {
+    const players = await this.playerRepository.find();
+    if (players.length === 0) {
+      return 1000; // Default rank if no players exist
     }
+    const totalRank = players.reduce((acc, player) => acc + player.rank, 0);
+    return totalRank / players.length;
+  }
 }

@@ -1,17 +1,16 @@
+import { Repository } from 'typeorm';
+import { Player } from '../../entity/entity.player';
 export declare class RankingCacheService {
-    private static instance;
-    private cache;
-    constructor();
-    static getInstance(): RankingCacheService;
-    setRankingData(key: string, data: any): void;
+    private readonly playerRepository;
+    constructor(playerRepository: Repository<Player>);
+    setRankingData(name: string, rank: number): Promise<void>;
     pushPlayerData(playerData: {
-        id: string;
+        name: string;
         rank: number;
-    }): void;
-    getCache(): Map<string, any>;
-    getRankingData(key: string): any | undefined;
-    getId(key: string): any | undefined;
-    getRank(key: string): any | undefined;
-    getAverageRanking(): number;
-    updatePlayerRank(id: string, rankChange: number): void;
+    }): Promise<void>;
+    getRankingData(): Promise<Player[]>;
+    getId(name: string): Promise<number | undefined>;
+    getRank(name: string): Promise<number | undefined>;
+    getAverageRanking(): Promise<number>;
+    updatePlayerRank(name: string, rankChange: number): Promise<void>;
 }

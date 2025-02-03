@@ -1,15 +1,18 @@
+import { RankingCacheService } from './services/ranking-cache/ranking-cache.service';
+import { PlayersService } from './services/players/players.service';
+import { MatchsService } from './services/matchs/matchs.service';
 import { Response } from 'express';
 export declare class AppController {
-    private playersService;
-    private rankingCacheService;
-    private matchService;
-    constructor();
+    private readonly rankingCacheService;
+    private readonly playersService;
+    private readonly matchService;
+    constructor(rankingCacheService: RankingCacheService, playersService: PlayersService, matchService: MatchsService);
     getHome(): string;
     postPlayer(res: Response, body: {
-        id: string;
+        name: string;
     }): void;
-    getRanking(): string;
-    getRankingEvent(res: Response): void;
+    getRanking(): Promise<string>;
+    getRankingEvent(res: Response): Promise<void>;
     postMatch(res: Response, body: {
         adversaryA: string;
         adversaryB: string;

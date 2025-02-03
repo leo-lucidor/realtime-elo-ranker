@@ -8,30 +8,28 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var MatchsService_1;
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MatchsService = void 0;
 const common_1 = require("@nestjs/common");
-const ranking_cache_service_1 = require("../ranking-cache/ranking-cache.service");
-const players_service_1 = require("../players/players.service");
-let MatchsService = MatchsService_1 = class MatchsService {
-    constructor() {
-        this.rankingCacheService = ranking_cache_service_1.RankingCacheService.getInstance();
-        this.playersService = players_service_1.PlayersService.getInstance();
-    }
-    static getInstance() {
-        if (!MatchsService_1.instance) {
-            MatchsService_1.instance = new MatchsService_1();
-        }
-        return MatchsService_1.instance;
+const typeorm_1 = require("@nestjs/typeorm");
+const typeorm_2 = require("typeorm");
+const entity_player_1 = require("../../entity/entity.player");
+let MatchsService = class MatchsService {
+    constructor(playerRepository) {
+        this.playerRepository = playerRepository;
     }
     async processMatch(match) {
         const { adversaryA, adversaryB, winner, draw } = match;
-        if (!this.rankingCacheService.getId(adversaryA) || !this.rankingCacheService.getId(adversaryB)) {
+        const playerA = await this.playerRepository.findOne({ where: { name: adversaryA } });
+        const playerB = await this.playerRepository.findOne({ where: { name: adversaryB } });
+        if (!playerA || !playerB) {
             throw new Error(`One of the players does not exist`);
         }
-        const playerARank = this.playersService.getRankPlayer(adversaryA);
-        const playerBRank = this.playersService.getRankPlayer(adversaryB);
+        const playerARank = playerA.rank;
+        const playerBRank = playerB.rank;
         const K = 32;
         const weA = 1 / (1 + Math.pow(10, (playerBRank - playerARank) / 400));
         const weB = 1 / (1 + Math.pow(10, (playerARank - playerBRank) / 400));
@@ -55,14 +53,17 @@ let MatchsService = MatchsService_1 = class MatchsService {
         }
         const scoreAUpdated = Math.round(playerARank + K * (scoreA - weA));
         const scoreBUpdated = Math.round(playerBRank + K * (scoreB - weB));
-        this.rankingCacheService.updatePlayerRank(adversaryA, scoreAUpdated);
-        this.rankingCacheService.updatePlayerRank(adversaryB, scoreBUpdated);
+        playerA.rank = scoreAUpdated;
+        playerB.rank = scoreBUpdated;
+        await this.playerRepository.save(playerA);
+        await this.playerRepository.save(playerB);
         return result;
     }
 };
 exports.MatchsService = MatchsService;
-exports.MatchsService = MatchsService = MatchsService_1 = __decorate([
+exports.MatchsService = MatchsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [])
+    __param(0, (0, typeorm_1.InjectRepository)(entity_player_1.Player)),
+    __metadata("design:paramtypes", [typeorm_2.Repository])
 ], MatchsService);
 //# sourceMappingURL=matchs.service.js.map

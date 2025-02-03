@@ -17,39 +17,49 @@ const ranking_cache_service_1 = require("./services/ranking-cache/ranking-cache.
 const players_service_1 = require("./services/players/players.service");
 const matchs_service_1 = require("./services/matchs/matchs.service");
 const common_1 = require("@nestjs/common");
-const players_data_1 = require("./data/players.data");
 let AppController = class AppController {
-    constructor() {
-        this.playersService = players_service_1.PlayersService.getInstance();
-        this.rankingCacheService = ranking_cache_service_1.RankingCacheService.getInstance();
-        this.matchService = matchs_service_1.MatchsService.getInstance();
+    constructor(rankingCacheService, playersService, matchService) {
+        this.rankingCacheService = rankingCacheService;
+        this.playersService = playersService;
+        this.matchService = matchService;
     }
     getHome() {
-        return players_service_1.PlayersService.getInstance().getPlayers().toString();
+        return this.playersService.getPlayers().toString();
     }
     postPlayer(res, body) {
-        const { id } = body;
-        console.log(`Received player: id=${id}`);
-        this.playersService.addPlayer(id);
-        res.status(200).send(id);
+        const { name } = body;
+        console.log(`Received player: id=${name}`);
+        this.playersService.addPlayer(name);
+        res.status(200).send(name);
     }
-    getRanking() {
-        return this.rankingCacheService.getRankingData("ranking");
+    async getRanking() {
+        const rankingData = await this.rankingCacheService.getRankingData();
+        return JSON.stringify(rankingData);
     }
-    getRankingEvent(res) {
+    async getRankingEvent(res) {
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
-        setInterval(() => {
+        const sendRankingUpdate = async () => {
+            const players = await this.rankingCacheService.getRankingData();
+            const randomPlayer = players[Math.floor(Math.random() * players.length)];
+            const newRank = Math.floor(Math.random() * 2500);
+            await this.rankingCacheService.updatePlayerRank(randomPlayer.name, newRank);
             res.write("event: message\n" + "data: " + JSON.stringify({
                 type: "RankingUpdate",
                 player: {
-                    id: players_data_1.FAKE_PLAYERS[Math.floor(Math.random() * players_data_1.FAKE_PLAYERS.length)],
-                    rank: Math.floor(Math.random() * 2500)
+                    id: randomPlayer.name,
+                    name: randomPlayer.name,
+                    rank: newRank,
                 }
             }) + '\n\n');
-        }, 500);
+        };
+        const intervalId = setInterval(sendRankingUpdate, 500);
+        res.on('close', () => {
+            clearInterval(intervalId);
+            res.end();
+        });
     }
     async postMatch(res, body) {
         const result = await this.matchService.processMatch(body);
@@ -75,14 +85,14 @@ __decorate([
     (0, common_1.Get)("/api/ranking/"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", String)
+    __metadata("design:returntype", Promise)
 ], AppController.prototype, "getRanking", null);
 __decorate([
     (0, common_1.Get)('/api/ranking/events'),
     __param(0, (0, common_1.Res)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], AppController.prototype, "getRankingEvent", null);
 __decorate([
     (0, common_1.Post)("/api/match"),
@@ -94,6 +104,8 @@ __decorate([
 ], AppController.prototype, "postMatch", null);
 exports.AppController = AppController = __decorate([
     (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [])
+    __metadata("design:paramtypes", [ranking_cache_service_1.RankingCacheService,
+        players_service_1.PlayersService,
+        matchs_service_1.MatchsService])
 ], AppController);
 //# sourceMappingURL=app.controller.js.map

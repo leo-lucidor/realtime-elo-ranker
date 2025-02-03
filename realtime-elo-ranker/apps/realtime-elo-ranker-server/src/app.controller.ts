@@ -3,55 +3,66 @@ import { PlayersService } from './services/players/players.service';
 import { MatchsService } from './services/matchs/matchs.service';
 import { Controller, Get, Res, Post, Body } from '@nestjs/common';
 import { Response } from 'express';
-import { FAKE_PLAYERS } from './data/players.data';
 
 @Controller()
 export class AppController {
-  private playersService: PlayersService;
-  private rankingCacheService: RankingCacheService;
-  private matchService: MatchsService;
-
-  constructor() {
-    this.playersService = PlayersService.getInstance();
-    this.rankingCacheService = RankingCacheService.getInstance();
-    this.matchService = MatchsService.getInstance();
-  }
+  constructor(
+    private readonly rankingCacheService: RankingCacheService,
+    private readonly playersService: PlayersService,
+    private readonly matchService: MatchsService
+  ) {}
 
   @Get()
   getHome(): string {
-    return PlayersService.getInstance().getPlayers().toString();
+    return this.playersService.getPlayers().toString();
   }
 
   @Post("/api/player")
-  postPlayer(@Res() res: Response, @Body() body: { id: string }): void {
-    const { id } = body;
-    console.log(`Received player: id=${id}`);
-    this.playersService.addPlayer(id);
-    res.status(200).send(id);
+  postPlayer(@Res() res: Response, @Body() body: { name: string }): void {
+    const { name } = body;
+    console.log(`Received player: id=${name}`);
+    this.playersService.addPlayer(name);
+    res.status(200).send(name);
   }
 
   @Get("/api/ranking/")
-  getRanking(): string {
-    return this.rankingCacheService.getRankingData("ranking");
+  async getRanking(): Promise<string> {
+    const rankingData = await this.rankingCacheService.getRankingData();
+    return JSON.stringify(rankingData);
   }
 
   @Get('/api/ranking/events')
-  getRankingEvent(@Res() res: Response): void {
+  async getRankingEvent(@Res() res: Response): Promise<void> {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
-
-    setInterval(() => {
+  
+    const sendRankingUpdate = async () => {
+      const players = await this.rankingCacheService.getRankingData();
+      const randomPlayer = players[Math.floor(Math.random() * players.length)];
+      const newRank = Math.floor(Math.random() * 2500);
+  
+      await this.rankingCacheService.updatePlayerRank(randomPlayer.name, newRank);
+  
       res.write("event: message\n" + "data: " + JSON.stringify({
         type: "RankingUpdate",
         player: {
-          id: FAKE_PLAYERS[Math.floor(Math.random() * FAKE_PLAYERS.length)],
-          rank: Math.floor(Math.random() * 2500)
+          id: randomPlayer.name,
+          name: randomPlayer.name,
+          rank: newRank,
         }
       }) + '\n\n');
-    }, 500);
+    };
+  
+    const intervalId = setInterval(sendRankingUpdate, 500);
+  
+    res.on('close', () => {
+      clearInterval(intervalId);
+      res.end();
+    });
   }
+
 
   @Post("/api/match")
   async postMatch(@Res() res: Response, @Body() body: { adversaryA: string, adversaryB: string, winner: string | null, draw: boolean }): Promise<void> {

@@ -1,65 +1,59 @@
 import { Injectable } from '@nestjs/common';
-import { RankingCacheService } from '../ranking-cache/ranking-cache.service';
-import { PlayersService } from '../players/players.service';
-
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Player } from '../../entity/entity.player';
 
 @Injectable()
 export class MatchsService {
-    private static instance: MatchsService;
-    private rankingCacheService: RankingCacheService;
-    private playersService: PlayersService;
+  constructor(
+    @InjectRepository(Player)
+    private readonly playerRepository: Repository<Player>,
+  ) {}
 
-    constructor() {
-        this.rankingCacheService = RankingCacheService.getInstance();
-        this.playersService = PlayersService.getInstance();
+  public async processMatch(match: { adversaryA: string, adversaryB: string, winner: string | null, draw: boolean }): Promise<string> {
+    const { adversaryA, adversaryB, winner, draw } = match;
+
+    const playerA = await this.playerRepository.findOne({ where: { name: adversaryA } });
+    const playerB = await this.playerRepository.findOne({ where: { name: adversaryB } });
+
+    if (!playerA || !playerB) {
+      throw new Error(`One of the players does not exist`);
     }
 
-    public static getInstance(): MatchsService {
-        if (!MatchsService.instance) {
-            MatchsService.instance = new MatchsService();
-        }
-        return MatchsService.instance;  
+    const playerARank = playerA.rank;
+    const playerBRank = playerB.rank;
+
+    const K = 32;
+    const weA = 1 / (1 + Math.pow(10, (playerBRank - playerARank) / 400));
+    const weB = 1 / (1 + Math.pow(10, (playerARank - playerBRank) / 400));
+
+    let scoreA = 0.5;
+    let scoreB = 0.5;
+    let result = "Match nul";
+
+    if (!draw) {
+      if (winner === adversaryA) {
+        scoreA = 1;
+        scoreB = 0;
+        result = `${adversaryA} gagne`;
+      } else if (winner === adversaryB) {
+        scoreA = 0;
+        scoreB = 1;
+        result = `${adversaryB} gagne`;
+      } else {
+        throw new Error(`Winner must be one of the players`);
+      }
     }
 
-    public async processMatch(match: { adversaryA: string, adversaryB: string, winner: string | null, draw: boolean }): Promise<string> {
-        const { adversaryA, adversaryB, winner, draw } = match;
-        
-        // regarde si les deux joueurs exitent dans le cache
-        if (!this.rankingCacheService.getId(adversaryA) || !this.rankingCacheService.getId(adversaryB)) {
-            throw new Error(`One of the players does not exist`);
-        }
+    const scoreAUpdated = Math.round(playerARank + K * (scoreA - weA));
+    const scoreBUpdated = Math.round(playerBRank + K * (scoreB - weB));
 
-        const playerARank = this.playersService.getRankPlayer(adversaryA);
-        const playerBRank = this.playersService.getRankPlayer(adversaryB);
+    playerA.rank = scoreAUpdated;
+    playerB.rank = scoreBUpdated;
 
-        const K = 32;
-        const weA = 1 / (1 + Math.pow(10, (playerBRank - playerARank) / 400));
-        const weB = 1 / (1 + Math.pow(10, (playerARank - playerBRank) / 400));
+    await this.playerRepository.save(playerA);
+    await this.playerRepository.save(playerB);
 
-        let scoreA = 0.5;
-        let scoreB = 0.5;
-        let result = "Match nul";
-
-        if(!draw){
-            if(winner === adversaryA){
-                scoreA = 1;
-                scoreB = 0;
-                result = `${adversaryA} gagne`;
-            } else if(winner === adversaryB){
-                scoreA = 0;
-                scoreB = 1;
-                result = `${adversaryB} gagne`;
-            } else {
-                throw new Error(`Winner must be one of the players`);
-            }
-        }
-
-        const scoreAUpdated = Math.round(playerARank + K * (scoreA - weA));
-        const scoreBUpdated = Math.round(playerBRank + K * (scoreB - weB));
-
-        this.rankingCacheService.updatePlayerRank(adversaryA, scoreAUpdated);
-        this.rankingCacheService.updatePlayerRank(adversaryB, scoreBUpdated);
-
-        return result;
-    }
+    return result;
+  }
 }

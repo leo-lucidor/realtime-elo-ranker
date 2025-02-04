@@ -8,7 +8,7 @@ import { MatchsService } from './services/matchs/matchs.service';
 import { FAKE_PLAYERS } from './data/players.data';
 import { Player } from './entity/entity.player';
 import { Inject } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { getRepositoryToken, InjectRepository } from '@nestjs/typeorm';
 
 @Module({
   imports: [
@@ -30,15 +30,25 @@ export class AppModule implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    const players = FAKE_PLAYERS.map((name, index) => ({
-      name,
-      rank: 1000 + index * 10,
-    }));
+    await this.addFakePlayers();
+  }
 
-    await this.playerRepository.save(players);
+  private async addFakePlayers() {
+    if (await this.playerRepository.count() === 0) {
+      const fakeRanking = FAKE_PLAYERS.map((player, index) => ({
+        id: player,
+        rank: 1000 + index * 10,
+      })).sort((a, b) => b.rank - a.rank);
+
+      const players = fakeRanking.map(ranking => {
+        const player = new Player();
+        player.name = ranking.id;
+        player.rank = ranking.rank;
+        return player;
+      });
+
+      await this.playerRepository.save(players);
+    }
   }
 }
 
-function InjectRepository(entity: Function) {
-  return Inject(getRepositoryToken(entity));
-}

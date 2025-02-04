@@ -5,4 +5,5 @@ export declare class AppModule implements OnModuleInit {
     private readonly playerRepository;
     constructor(playerRepository: Repository<Player>);
     onModuleInit(): Promise<void>;
+    private addFakePlayers;
 }

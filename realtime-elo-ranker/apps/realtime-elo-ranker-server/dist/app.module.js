@@ -22,18 +22,28 @@ const players_service_1 = require("./services/players/players.service");
 const matchs_service_1 = require("./services/matchs/matchs.service");
 const players_data_1 = require("./data/players.data");
 const entity_player_1 = require("./entity/entity.player");
-const common_2 = require("@nestjs/common");
 const typeorm_3 = require("@nestjs/typeorm");
 let AppModule = class AppModule {
     constructor(playerRepository) {
         this.playerRepository = playerRepository;
     }
     async onModuleInit() {
-        const players = players_data_1.FAKE_PLAYERS.map((name, index) => ({
-            name,
-            rank: 1000 + index * 10,
-        }));
-        await this.playerRepository.save(players);
+        await this.addFakePlayers();
+    }
+    async addFakePlayers() {
+        if (await this.playerRepository.count() === 0) {
+            const fakeRanking = players_data_1.FAKE_PLAYERS.map((player, index) => ({
+                id: player,
+                rank: 1000 + index * 10,
+            })).sort((a, b) => b.rank - a.rank);
+            const players = fakeRanking.map(ranking => {
+                const player = new entity_player_1.Player();
+                player.name = ranking.id;
+                player.rank = ranking.rank;
+                return player;
+            });
+            await this.playerRepository.save(players);
+        }
     }
 };
 exports.AppModule = AppModule;
@@ -51,10 +61,7 @@ exports.AppModule = AppModule = __decorate([
         controllers: [app_controller_1.AppController],
         providers: [ranking_cache_service_1.RankingCacheService, players_service_1.PlayersService, matchs_service_1.MatchsService],
     }),
-    __param(0, InjectRepository(entity_player_1.Player)),
+    __param(0, (0, typeorm_3.InjectRepository)(entity_player_1.Player)),
     __metadata("design:paramtypes", [typeorm_2.Repository])
 ], AppModule);
-function InjectRepository(entity) {
-    return (0, common_2.Inject)((0, typeorm_3.getRepositoryToken)(entity));
-}
 //# sourceMappingURL=app.module.js.map

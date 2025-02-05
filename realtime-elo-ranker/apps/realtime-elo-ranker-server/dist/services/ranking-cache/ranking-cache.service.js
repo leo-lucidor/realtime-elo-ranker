@@ -65,7 +65,6 @@ let RankingCacheService = class RankingCacheService {
     async updatePlayerRank(name, rankChange) {
         const player = await this.playerRepository.findOne({ where: { name } });
         if (player) {
-            console.log(`Updating player ${name} rank by ${rankChange}`);
             player.rank = rankChange;
             await this.playerRepository.save(player);
         }

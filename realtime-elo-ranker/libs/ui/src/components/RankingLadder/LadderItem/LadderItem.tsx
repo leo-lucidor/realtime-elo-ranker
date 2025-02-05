@@ -1,6 +1,7 @@
 import React, { FC } from "react";
 
 export type PlayerData = {
+  id: string;
   name: string;
   rank: number;
 };

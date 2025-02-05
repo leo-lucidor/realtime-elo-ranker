@@ -18,11 +18,10 @@ export class AppController {
   }
 
   @Post("/api/player")
-  postPlayer(@Res() res: Response, @Body() body: { name: string }): void {
-    const { name } = body;
-    console.log(`Received player: id=${name}`);
-    this.playersService.addPlayer(name);
-    res.status(200).send(name);
+  postPlayer(@Res() res: Response, @Body() body: { id: string }): void {
+    let { id } = body;
+    this.playersService.addPlayer(id);
+    res.status(200).send(id);
   }
 
   @Get("/api/ranking/")
@@ -43,7 +42,6 @@ export class AppController {
       const randomPlayer = players[Math.floor(Math.random() * players.length)];
       const newRank = randomPlayer.rank + Math.floor(Math.random() * 10) - 5;
   
-      console.log(`Sending ranking update for player ${randomPlayer.name} with new rank ${newRank}`);
       await this.rankingCacheService.updatePlayerRank(randomPlayer.name, newRank);
   
       res.write("event: message\n" + "data: " + JSON.stringify({
@@ -67,7 +65,17 @@ export class AppController {
 
   @Post("/api/match")
   async postMatch(@Res() res: Response, @Body() body: { adversaryA: string, adversaryB: string, winner: string | null, draw: boolean }): Promise<void> {
-    const result = await this.matchService.processMatch(body);
-    res.status(200).send(result);
+    if (body.adversaryA === "" || body.adversaryB === "") {
+      res.status(400).send("Adversary names cannot be empty");
+      return;
+    }
+    if (body.adversaryA === body.adversaryB) {
+      res.status(400).send("Adversaries must be different");
+      return;
+    }
+    else {
+      const result = await this.matchService.processMatch(body);
+      res.status(200).send(result);
+    }
   }
 }

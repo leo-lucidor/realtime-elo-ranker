@@ -26,9 +26,16 @@ let PlayersService = class PlayersService {
         if (existingPlayer) {
             console.log(`Player with name ${name} already exists`);
         }
-        const rank = await this.getAverageRanking();
-        const newPlayer = this.playerRepository.create({ name, rank });
-        this.playerRepository.save(newPlayer);
+        else {
+            if (name.length === 0) {
+                throw new Error(`Player name cannot be empty`);
+            }
+            else {
+                const rank = await this.getAverageRanking();
+                const newPlayer = this.playerRepository.create({ name, rank });
+                this.playerRepository.save(newPlayer);
+            }
+        }
     }
     async updatePlayer(id, rank) {
         await this.playerRepository.update(id, { rank });

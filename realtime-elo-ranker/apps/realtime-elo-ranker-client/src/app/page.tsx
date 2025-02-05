@@ -173,9 +173,13 @@ export default function Home() {
               Déclarer un joueur
             </h2>
             <PlayerForm
-              callback={(playerName: string) =>
-                postPlayer(API_BASE_URL, playerName)
-              }
+              callback={async (playerName: string) => {
+                const response = await postPlayer(API_BASE_URL, playerName);
+                if (response.ok) {
+                  eventEmitter.emit("playerPosted");
+                }
+                return response;
+              }}
             />
           </div>
         </div>

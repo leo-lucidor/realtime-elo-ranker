@@ -27,10 +27,9 @@ let AppController = class AppController {
         return this.playersService.getPlayers().toString();
     }
     postPlayer(res, body) {
-        const { name } = body;
-        console.log(`Received player: id=${name}`);
-        this.playersService.addPlayer(name);
-        res.status(200).send(name);
+        let { id } = body;
+        this.playersService.addPlayer(id);
+        res.status(200).send(id);
     }
     async getRanking() {
         const rankingData = await this.rankingCacheService.getRankingData();
@@ -45,7 +44,6 @@ let AppController = class AppController {
             const players = await this.playersService.getPlayers();
             const randomPlayer = players[Math.floor(Math.random() * players.length)];
             const newRank = randomPlayer.rank + Math.floor(Math.random() * 10) - 5;
-            console.log(`Sending ranking update for player ${randomPlayer.name} with new rank ${newRank}`);
             await this.rankingCacheService.updatePlayerRank(randomPlayer.name, newRank);
             res.write("event: message\n" + "data: " + JSON.stringify({
                 type: "RankingUpdate",
@@ -63,8 +61,18 @@ let AppController = class AppController {
         });
     }
     async postMatch(res, body) {
-        const result = await this.matchService.processMatch(body);
-        res.status(200).send(result);
+        if (body.adversaryA === "" || body.adversaryB === "") {
+            res.status(400).send("Adversary names cannot be empty");
+            return;
+        }
+        if (body.adversaryA === body.adversaryB) {
+            res.status(400).send("Adversaries must be different");
+            return;
+        }
+        else {
+            const result = await this.matchService.processMatch(body);
+            res.status(200).send(result);
+        }
     }
 };
 exports.AppController = AppController;

@@ -9,7 +9,7 @@ export declare class AppController {
     constructor(rankingCacheService: RankingCacheService, playersService: PlayersService, matchService: MatchsService);
     getHome(): string;
     postPlayer(res: Response, body: {
-        name: string;
+        id: string;
     }): void;
     getRanking(): Promise<string>;
     getRankingEvent(res: Response): Promise<void>;

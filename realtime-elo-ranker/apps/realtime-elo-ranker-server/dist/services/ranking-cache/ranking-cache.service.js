@@ -44,7 +44,7 @@ let RankingCacheService = class RankingCacheService {
         }
     }
     async getRankingData() {
-        return await this.playerRepository.find({ order: { rank: 'DESC' } });
+        return await this.playerRepository.find();
     }
     async getId(name) {
         const player = await this.playerRepository.findOne({ where: { name } });
@@ -65,7 +65,8 @@ let RankingCacheService = class RankingCacheService {
     async updatePlayerRank(name, rankChange) {
         const player = await this.playerRepository.findOne({ where: { name } });
         if (player) {
-            player.rank += rankChange;
+            console.log(`Updating player ${name} rank by ${rankChange}`);
+            player.rank = rankChange;
             await this.playerRepository.save(player);
         }
     }

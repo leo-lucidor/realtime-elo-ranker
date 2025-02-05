@@ -33,7 +33,7 @@ export class RankingCacheService {
   }
 
   public async getRankingData(): Promise<Player[]> {
-    return await this.playerRepository.find({ order: { rank: 'DESC' } });
+    return await this.playerRepository.find();
   }
 
   public async getId(name: string): Promise<number | undefined> {
@@ -58,7 +58,8 @@ export class RankingCacheService {
   public async updatePlayerRank(name: string, rankChange: number): Promise<void> {
     const player = await this.playerRepository.findOne({ where: { name } });
     if (player) {
-      player.rank += rankChange;
+      console.log(`Updating player ${name} rank by ${rankChange}`);
+      player.rank = rankChange;
       await this.playerRepository.save(player);
     }
   }

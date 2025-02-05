@@ -42,9 +42,10 @@ let AppController = class AppController {
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
         const sendRankingUpdate = async () => {
-            const players = await this.rankingCacheService.getRankingData();
+            const players = await this.playersService.getPlayers();
             const randomPlayer = players[Math.floor(Math.random() * players.length)];
-            const newRank = Math.floor(Math.random() * 2500);
+            const newRank = randomPlayer.rank + Math.floor(Math.random() * 10) - 5;
+            console.log(`Sending ranking update for player ${randomPlayer.name} with new rank ${newRank}`);
             await this.rankingCacheService.updatePlayerRank(randomPlayer.name, newRank);
             res.write("event: message\n" + "data: " + JSON.stringify({
                 type: "RankingUpdate",

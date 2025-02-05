@@ -10,16 +10,15 @@ export class PlayersService {
     private readonly playerRepository: Repository<Player>,
   ) {}
 
-  async addPlayer(name: string): Promise<Player> {
+  async addPlayer(name: string): Promise<void> {
     const existingPlayer = await this.playerRepository.findOne({ where: { name } });
     if (existingPlayer) {
       console.log(`Player with name ${name} already exists`);
-      return existingPlayer;
     }
 
     const rank = await this.getAverageRanking();
     const newPlayer = this.playerRepository.create({ name, rank });
-    return this.playerRepository.save(newPlayer);
+    this.playerRepository.save(newPlayer);
   }
 
   async updatePlayer(id: number, rank: number): Promise<void> {
@@ -49,7 +48,7 @@ export class PlayersService {
   private async getAverageRanking(): Promise<number> {
     const players = await this.playerRepository.find();
     if (players.length === 0) {
-      return 1000; // Default rank if no players exist
+      return 1000;
     }
     const totalRank = players.reduce((acc, player) => acc + player.rank, 0);
     return totalRank / players.length;

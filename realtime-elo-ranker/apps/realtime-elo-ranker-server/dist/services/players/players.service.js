@@ -25,11 +25,10 @@ let PlayersService = class PlayersService {
         const existingPlayer = await this.playerRepository.findOne({ where: { name } });
         if (existingPlayer) {
             console.log(`Player with name ${name} already exists`);
-            return existingPlayer;
         }
         const rank = await this.getAverageRanking();
         const newPlayer = this.playerRepository.create({ name, rank });
-        return this.playerRepository.save(newPlayer);
+        this.playerRepository.save(newPlayer);
     }
     async updatePlayer(id, rank) {
         await this.playerRepository.update(id, { rank });
